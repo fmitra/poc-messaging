@@ -1,0 +1,20 @@
+{
+  "extends": [
+    "plugin:react/recommended"
+  ],
+  "parserOptions": {
+    "sourceType": "module",
+    "ecmaVersion": 2018,
+    "ecmaFeatures": {
+      "jsx": true
+    },
+    "useJSXTextNode": true
+  },
+  "settings": {
+    "react": {
+      "version": "latest",
+      "pragma": "h"
+    }
+  },
+  "rules": {}
+}
