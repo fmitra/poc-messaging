@@ -4,6 +4,7 @@ from messaging.main import create_application
 
 
 @pytest.fixture
-async def client(test_client):
-    app = await test_client(create_application)
-    return app
+async def client(aiohttp_client):
+    app = create_application()
+    messaging_client = await aiohttp_client(app)
+    return messaging_client

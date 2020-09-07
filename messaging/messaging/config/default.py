@@ -1,0 +1,5 @@
+DEBUG = True
+
+SECRET = 'QxrY57HvDUAIZQvzAQgAe1zGlIR3Fp25sgphsY+1V0tUEQ9efzLeAw'
+
+JWT_ALG = 'HS256'

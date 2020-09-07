@@ -13,14 +13,16 @@ Backend development server is available at `http://localhost:8080`
 
 ```
 cd messaging
+make dev
 pip install -r requirements_dev.txt
 python -m messaging
 ```
 
-Pytest is used for testing:
+Pytest and Pylint is used for testing/linting:
 
 ```
-pytest tests/
+make test
+make lint
 ```
 
 ## Frontend
@@ -36,7 +38,7 @@ npx npm run start
 
 Client application will be available at `http://localhost:4000`
 
-Jest is used for testing:
+Jest and Eslint is used for testing/linting:
 
 ```
 npx npm run test
