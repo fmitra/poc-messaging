@@ -3,4 +3,6 @@ from .default import *
 
 DEBUG = False
 
-SECRET = ''
+APP_SECRET = ''
+
+SOCKET_SECRET = ''

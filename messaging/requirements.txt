@@ -4,3 +4,5 @@ async-timeout==3.0.1
 brotlipy==0.7.0
 cchardet==2.1.6
 pyjwt==1.7.1
+redis==3.5.3
+schema==0.7.2

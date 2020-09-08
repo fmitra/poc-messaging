@@ -1,3 +1,4 @@
+import logging
 import asyncio
 
 from aiohttp import web
@@ -7,11 +8,16 @@ from messaging.routes import add_routes
 
 
 def configure():
-    if not config.SECRET:
-        raise ValueError('config.SECRET should be configured to a random string')
+    if not config.APP_SECRET:
+        raise ValueError('config.APP_SECRET is not configured')
+
+    if not config.SOCKET_SECRET:
+        raise ValueError('config.SOCKET_SECRET is not configured')
 
     if not config.DEBUG:
         return
+
+    logging.basicConfig(level=logging.DEBUG)
 
     loop = asyncio.get_event_loop()
     loop.set_debug(True)
