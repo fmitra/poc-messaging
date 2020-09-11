@@ -25,7 +25,7 @@ async def test_establishes_and_closes_multiple_ws_connections(client):
     ws1 = await client.ws_connect('/ws?token={}'.format(token))
     ws2 = await client.ws_connect('/ws?token={}'.format(token))
 
-    await ws1.send_str('close')
+    await ws1.close()
     await ws1.receive()
     assert len(active_sockets.get_sockets(user_id)) == 1
 
@@ -61,10 +61,11 @@ async def test_establishes_ws_connection(client):
     token = data['token']
 
     ws = await client.ws_connect('/ws?token={}'.format(token))
-    await ws.send_str('hello world')
+    await ws.ping()
 
+    await ws.send_str('hello world')
     msg = await ws.receive()
-    assert msg.data == 'hello world /answer'
+    assert msg.data == 'hello world'
 
 
 async def test_fails_to_establish_ws_connection(client):

@@ -47,17 +47,21 @@ async def socket(request: web.Request) -> web.WebSocketResponse:
     token = get_socket_token(request)
     user_id = get_user_id(token)
 
-    ws = web.WebSocketResponse()
+    ws = web.WebSocketResponse(autoping=True, heartbeat=10)
     await ws.prepare(request)
 
     active_sockets.set_socket(user_id, ws)
 
-    async for msg in ws:
-        if msg.type == WSMsgType.TEXT:
-            if msg.data == 'close':
+    try:
+        async for msg in ws:
+            if msg.type == WSMsgType.TEXT:
+                await ws.send_str(msg.data)
+            if msg.type in (WSMsgType.CLOSED, WSMsgType.CLOSE):
                 await active_sockets.close_socket(user_id, ws)
-            else:
-                await ws.send_str(msg.data + ' /answer')
-        elif msg.type == WSMsgType.ERROR:
-            logger.info('ws connection closed with exception %s' % ws.exception())
+            if msg.type == WSMsgType.ERROR:
+                await active_sockets.close_socket(user_id, ws)
+                logger.info('ws connection closed with exception %s' % ws.exception())
+    finally:
+        await active_sockets.close_socket(user_id, ws)
+
     return ws

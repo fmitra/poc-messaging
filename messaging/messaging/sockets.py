@@ -44,8 +44,9 @@ class Sockets:
     async def close_socket(self, user_id: str, ws: web.WebSocketResponse):
         with self.redis.lock(user_id):
             sockets = self.get_sockets(user_id)
-            idx = sockets.index(ws)
-            del sockets[idx]
+            if ws in sockets:
+                sockets.remove(ws)
+
             await ws.close()
 
     async def process(self, message: Message):
