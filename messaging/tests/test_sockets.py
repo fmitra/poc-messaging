@@ -2,12 +2,15 @@ from unittest import mock
 import json
 import threading
 import asyncio
+import redis
 
-from messaging.notifications import active_sockets
+from messaging.sockets import Sockets
+from messaging import config
 
 
-@mock.patch('messaging.notifications.active_sockets.process')
+@mock.patch.object(Sockets, 'process')
 async def test_processes_published_messages(process_mock):
+    active_sockets = Sockets(redis.Redis(**config.REDIS))
     loop = asyncio.new_event_loop()
     t = threading.Thread(target=active_sockets.monitor, args=(loop,), daemon=True)
     t.start()

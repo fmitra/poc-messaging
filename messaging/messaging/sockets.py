@@ -1,33 +1,24 @@
 import concurrent
 import logging
 import json
-from typing import Optional, List, Dict, Any, Union, TypedDict
+from typing import Optional, List, Dict, Any, Union
 import asyncio
 
 import redis
 from aiohttp import web
-from schema import Schema, SchemaError
+from schema import SchemaError
 
 from messaging import config
+from messaging.types import Message, message_schema
 
 
 NOTIFICATION_CHANNEL = 'notifications'
 
 logger = logging.getLogger(__name__)
 
-message_schema = Schema({
-    'user_id': str,
-    'content': str,
-})
-
-
-class Message(TypedDict):
-    user_id: str
-    content: str
-
 
 class Sockets:
-    def __init__(self, channel_name: str, r: redis.Redis):
+    def __init__(self, r: redis.Redis, channel_name: str = NOTIFICATION_CHANNEL):
         self.sockets: Dict[str, List[web.WebSocketResponse]] = {}
         self.redis = r
         self.channel = r.pubsub()
@@ -40,6 +31,29 @@ class Sockets:
 
     def get_sockets(self, user_id: str) -> List[web.WebSocketResponse]:
         return self.sockets.get(user_id, [])
+
+    def monitor(self, loop: asyncio.BaseEventLoop):
+        # `listen()` blocks forever so we monitor for messages
+        # in a separate event loop in a new thread running as a daemon.
+        asyncio.set_event_loop(loop)
+        return loop.run_until_complete(self._handle_new_messages())
+
+    def serialize(self, msg: Union[bytes, int]) -> Optional[Message]:
+        try:
+            data = json.loads(msg)
+        except TypeError:
+            return None
+        except json.decoder.JSONDecodeError:
+            logger.exception('invalid JSON')
+            return None
+
+        try:
+            message_schema.validate(data)
+        except SchemaError:
+            logger.exception('invalid message schema')
+            return None
+
+        return data
 
     async def close_socket(self, user_id: str, ws: web.WebSocketResponse):
         with self.redis.lock(user_id):
@@ -58,11 +72,13 @@ class Sockets:
         futures = [s.send_str(data['content']) for s in sockets]
         await asyncio.gather(*futures)
 
-    def monitor(self, loop: asyncio.BaseEventLoop):
-        # `listen()` blocks forever so we monitor for messages
-        # in a separate event loop in a new thread running as a daemon.
-        asyncio.set_event_loop(loop)
-        return loop.run_until_complete(self._handle_new_messages())
+    async def publish_all(self, msg: Message):
+        all_ws = self.get_sockets(msg['user_id'])
+        if not all_ws:
+            return
+
+        outgoing = [ws.send_str(msg['content']) for ws in all_ws]
+        await asyncio.gather(*outgoing)
 
     async def publish(self, msg: Message) -> bool:
         try:
@@ -78,28 +94,8 @@ class Sockets:
 
         return True
 
-    def serialize(self, msg: Union[bytes, int]) -> Optional[Message]:
-        try:
-            data = json.loads(msg)
-        except TypeError:
-            return None
-        except (json.decoder.JSONDecodeError, TypeError):
-            logger.exception('invalid JSON')
-            return None
-
-        try:
-            message_schema.validate(data)
-        except SchemaError:
-            logger.exception('invalid message schema')
-            return None
-
-        return data
-
     async def _handle_new_messages(self):
         for msg in self.channel.listen():
             data = self.serialize(msg['data'])
             if data:
                 await self.process(data)
-
-
-active_sockets = Sockets(NOTIFICATION_CHANNEL, redis.Redis(**config.REDIS))
