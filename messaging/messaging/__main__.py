@@ -1,3 +1,4 @@
+"""POC demonstration of distributed websockets."""
 from messaging.main import main
 
 

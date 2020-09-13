@@ -1,0 +1,9 @@
+[FORMAT]
+max-line-length = 85
+
+[MESSAGES CONTROL]
+disable =
+    invalid-name,
+
+[MASTER]
+ignore=config

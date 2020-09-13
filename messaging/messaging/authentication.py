@@ -1,11 +1,13 @@
+"""Authentication management
+
+Provides token generation, validation and other
+auth/identity related functions.
+
+"""
 from uuid import uuid4
 from datetime import datetime, timedelta
 from functools import wraps
-from typing import (
-    Dict,
-    Awaitable,
-    Optional,
-)
+from typing import Optional
 
 import jwt
 from aiohttp import web
@@ -15,6 +17,12 @@ from messaging.types import HTTPHandler
 
 
 def require_auth(view: HTTPHandler):
+    """Enforces authentication requirements on a view.
+
+    A token may be passed either in a header or as a URL
+    query parameter (in the case of a websocket).
+
+    """
     @wraps(view)
     async def middleware(request: web.Request):
         token = request['token']
@@ -31,10 +39,9 @@ def require_auth(view: HTTPHandler):
 
 
 def is_token_valid(token: str, secret: str) -> bool:
-    decoded: Dict = {}
-
+    """Validates a token with a given secret."""
     try:
-        decoded = jwt.decode(
+        jwt.decode(
             str.encode(token),
             secret,
             algorithm=[config.JWT_ALG],
@@ -46,6 +53,14 @@ def is_token_valid(token: str, secret: str) -> bool:
 
 
 def create_token(secret: str, user_id: Optional[str] = None) -> str:
+    """Creates a new JWT token with a given secret.
+
+    If a user ID is not provided, it will be created automatically.
+    By default tokens have a 30 minute expiry. Socket tokens,
+    however have a 1 minute validity as they are expected to be
+    passed as a URL query parameter which is less secure.
+
+    """
     minutes_till_expiry = 30 if secret == config.APP_SECRET else 1
     exp = datetime.now() + timedelta(minutes=minutes_till_expiry)
 
@@ -62,6 +77,7 @@ def create_token(secret: str, user_id: Optional[str] = None) -> str:
 
 
 def get_user_id(token: str) -> str:
+    """Retrieves a user ID from a JWT token."""
     try:
         decoded = jwt.decode(str.encode(token), verify=False)
     except jwt.exceptions.PyJWTError:  # type: ignore
@@ -71,6 +87,7 @@ def get_user_id(token: str) -> str:
 
 
 def get_app_token(request: web.Request) -> str:
+    """Retrieves JWT token from a request header."""
     token = request.headers \
         .get('AUTHORIZATION', '') \
         .replace('Bearer ', '')
@@ -78,5 +95,6 @@ def get_app_token(request: web.Request) -> str:
 
 
 def get_socket_token(request: web.Request) -> str:
+    """Retrieves JWT token from a query parameter."""
     params = request.rel_url.query
     return params.get('token', '')

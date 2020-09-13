@@ -1,3 +1,4 @@
+"""Application types"""
 from typing import (
     Awaitable,
     Any,
@@ -13,6 +14,7 @@ HTTPHandler = Callable[[web.Request], Awaitable[Any]]
 
 
 class Message(TypedDict):
+    """Represents a message for Redis PubSub"""
     user_id: str
     content: str
 

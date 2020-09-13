@@ -8,18 +8,12 @@ from messaging.authentication import (
     is_token_valid,
 )
 
+from tests.helpers import app_token, socket_token
+
 
 async def test_establishes_and_closes_multiple_ws_connections(client):
     sockets = client.app['sockets']
-    resp = await client.get('/token')
-    data = await resp.json()
-    token = data['token']
-
-    resp = await client.get('/ws/token', headers={
-        'Authorization': token,
-    })
-    data = await resp.json()
-    token = data['token']
+    token = await socket_token(client)
 
     user_id = get_user_id(token)
     ws1 = await client.ws_connect('/ws?token={}'.format(token))
@@ -30,36 +24,24 @@ async def test_establishes_and_closes_multiple_ws_connections(client):
     assert len(sockets.get_sockets(user_id)) == 1
 
 
-##async def test_receives_downstream_message(client):
-##    resp = await client.get('/token')
-##    data = await resp.json()
-##    token = data['token']
-##
-##    resp = await client.get('/ws/token', headers={
-##        'Authorization': token,
-##    })
-##    data = await resp.json()
-##    token = data['token']
-##
-##    user_id = get_user_id(token)
-##    ws = await client.ws_connect('/ws?token={}'.format(token))
-##
-##    await notify(user_id, 'hello')
-##    msg = await ws.receive()
-##    assert msg.data == 'hello'
+async def test_sends_message(client):
+    token = await socket_token(client)
+    user_id = get_user_id(token)
+    ws = await client.ws_connect('/ws?token={}'.format(token))
+
+    resp = await client.post('/message', json={
+        'user_id': user_id,
+        'content': 'hello',
+    })
+    data = await resp.json()
+    assert data['status'] == 'ok'
+
+    msg = await ws.receive()
+    assert msg.data == 'hello'
 
 
 async def test_establishes_ws_connection(client):
-    resp = await client.get('/token')
-    data = await resp.json()
-    token = data['token']
-
-    resp = await client.get('/ws/token', headers={
-        'Authorization': token,
-    })
-    data = await resp.json()
-    token = data['token']
-
+    token = await socket_token(client)
     ws = await client.ws_connect('/ws?token={}'.format(token))
     await ws.ping()
 
@@ -78,10 +60,7 @@ async def test_fails_to_establish_ws_connection(client):
 
 
 async def test_retrieves_socket_token(client):
-    resp = await client.get('/token')
-    data = await resp.json()
-    token = data['token']
-
+    token = await app_token(client)
     resp = await client.get('/ws/token', headers={
         'Authorization': token,
     })
