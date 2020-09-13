@@ -31,11 +31,10 @@ class Sockets:
         self.channel = r.pubsub()
         self.channel.subscribe(channel_name)
 
-    def set_socket(self, user_id: str, ws: web.WebSocketResponse):
+    async def set_socket(self, user_id: str, ws: web.WebSocketResponse):
         """Store a socket in memory, referenced by user_id."""
-        with self.redis.lock(user_id):
-            open_sockets = self.sockets.setdefault(user_id, [])
-            open_sockets.append(ws)
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, self._set_socket, user_id, ws)
 
     def get_sockets(self, user_id: str) -> List[web.WebSocketResponse]:
         """Retrieve all open sockets for a user_id."""
@@ -80,7 +79,7 @@ class Sockets:
         outgoing = [s.send_str(message['content']) for s in sockets]
         await asyncio.gather(*outgoing)
 
-    async def publish(self, msg: Message) -> bool:
+    async def publish(self, msg: Message):
         """Publish a message to a Redis channel.
 
         Consumers subscribed to the channel check if open sockets
@@ -91,7 +90,7 @@ class Sockets:
         try:
             message_schema.validate(msg)
         except SchemaError:
-            return False
+            return
 
         b = json.dumps(msg)
 
@@ -101,13 +100,16 @@ class Sockets:
         )
         await future
 
-        return True
-
     async def _handle_new_messages(self):
         for msg in self.channel.listen():
             data = serialize(msg['data'])
             if data:
                 await self.process(data)
+
+    def _set_socket(self, user_id: str, ws: web.WebSocketResponse):
+        with self.redis.lock(user_id):
+            open_sockets = self.sockets.setdefault(user_id, [])
+            open_sockets.append(ws)
 
 
 def serialize(msg: Union[str, bytearray, bytes]) -> Optional[Message]:

@@ -86,7 +86,7 @@ async def socket(request: web.Request) -> web.WebSocketResponse:
     ws = web.WebSocketResponse(autoping=True, heartbeat=10)
     await ws.prepare(request)
 
-    sockets.set_socket(user_id, ws)
+    await sockets.set_socket(user_id, ws)
 
     try:
         async for msg in ws:
