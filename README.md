@@ -13,6 +13,7 @@ Backend development server is available at `http://localhost:8080`
 
 ```
 cd messaging
+docker-compose -f docker-compose.test.yml up
 make dev
 pip install -r requirements_dev.txt
 python -m messaging
@@ -33,6 +34,7 @@ To start and access the client application, run the following:
 cd web
 nvm use
 npm install
+npm run config:dev
 npx npm run start
 ```
 

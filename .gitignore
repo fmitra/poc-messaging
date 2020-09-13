@@ -1,4 +1,7 @@
 __pycache__
 .DS_Store
-node_modules/
-config/local.py
+messaging/messaging/config/local.py
+web/src/config/local.ts
+web/dist/
+web/coverage/
+web/node_modules/

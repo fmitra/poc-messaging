@@ -44,7 +44,7 @@ def is_token_valid(token: str, secret: str) -> bool:
         jwt.decode(
             str.encode(token),
             secret,
-            algorithm=[config.JWT_ALG],
+            algorithms=[config.JWT_ALG],
         )
     except jwt.exceptions.PyJWTError:  # type: ignore
         return False
@@ -79,7 +79,11 @@ def create_token(secret: str, user_id: Optional[str] = None) -> str:
 def get_user_id(token: str) -> str:
     """Retrieves a user ID from a JWT token."""
     try:
-        decoded = jwt.decode(str.encode(token), verify=False)
+        decoded = jwt.decode(
+            str.encode(token),
+            verify=False,
+            algorithms=[config.JWT_ALG],
+        )
     except jwt.exceptions.PyJWTError:  # type: ignore
         decoded = {}
 

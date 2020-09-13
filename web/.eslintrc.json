@@ -1,6 +1,8 @@
 {
+  "parser": "@typescript-eslint/parser",
   "extends": [
-    "plugin:react/recommended"
+    "plugin:react/recommended",
+    "plugin:@typescript-eslint/recommended"
   ],
   "parserOptions": {
     "sourceType": "module",
@@ -8,7 +10,8 @@
     "ecmaFeatures": {
       "jsx": true
     },
-    "useJSXTextNode": true
+    "useJSXTextNode": true,
+    "project": "./tsconfig.json"
   },
   "settings": {
     "react": {
@@ -16,5 +19,20 @@
       "pragma": "h"
     }
   },
-  "rules": {}
+  "rules": {
+    "@typescript-eslint/indent": ["error", 2],
+    "@typescript-eslint/no-unused-vars": ["error", {
+      "vars": "all",
+      "args": "none"
+    }],
+    "@typescript-eslint/camelcase": "off",
+    "@typescript-eslint/no-explicit-any": "any",
+    "@typescript-eslint/explicit-member-accessibility": "off",
+    // ignore valid preact properties
+    "react/no-unescaped-entities": "off",
+    "react/no-unknown-property": [2, {"ignore": [
+      "for",
+      "class"
+    ]}]
+  }
 }

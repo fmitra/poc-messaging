@@ -8,7 +8,7 @@ const local = {
 module.exports = {
   mode: 'development',
   context: local.sources,
-  entry: './index.js',
+  entry: './index.tsx',
 
   output: {
     path: local.sources,
@@ -27,7 +27,7 @@ module.exports = {
   },
 
   resolve: {
-    extensions: ['.js', '.jsx'],
+    extensions: ['.ts', '.tsx', '.js', '.jsx'],
     alias: {
       '@messaging': local.sources,
     }
@@ -36,24 +36,9 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.(?:js|jsx)$/,
-        loader: 'babel-loader',
-        exclude: /node_modules/,
-
-        options: {
-          presets: [
-            '@babel/react',
-            '@babel/env'
-          ],
-          plugins: [
-            [
-              '@babel/plugin-transform-react-jsx', {
-                'pragma': 'h',
-                'pragmaFrag': 'Fragment'
-              }
-            ]
-          ]
-        }
+        test: /\.(?:ts|tsx)$/,
+        loader: 'ts-loader',
+        exclude: /node_modules/
       }
     ]
   },
