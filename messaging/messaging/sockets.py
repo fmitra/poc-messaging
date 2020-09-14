@@ -31,14 +31,14 @@ class Sockets:
         self.channel = r.pubsub()
         self.channel.subscribe(channel_name)
 
-    async def set_socket(self, user_id: str, ws: web.WebSocketResponse):
-        """Store a socket in memory, referenced by user_id."""
+    async def set_socket(self, username: str, ws: web.WebSocketResponse):
+        """Store a socket in memory, referenced by username."""
         loop = asyncio.get_event_loop()
-        await loop.run_in_executor(None, self._set_socket, user_id, ws)
+        await loop.run_in_executor(None, self._set_socket, username, ws)
 
-    def get_sockets(self, user_id: str) -> List[web.WebSocketResponse]:
-        """Retrieve all open sockets for a user_id."""
-        return self.sockets.get(user_id, [])
+    def get_sockets(self, username: str) -> List[web.WebSocketResponse]:
+        """Retrieve all open sockets for a username."""
+        return self.sockets.get(username, [])
 
     def monitor(self, loop: asyncio.BaseEventLoop):
         """Monitor for new messages published to the subscribed Redis channel.
@@ -52,10 +52,10 @@ class Sockets:
         asyncio.set_event_loop(loop)
         return loop.run_until_complete(self._handle_new_messages())
 
-    async def close_socket(self, user_id: str, ws: web.WebSocketResponse):
+    async def close_socket(self, username: str, ws: web.WebSocketResponse):
         """Close a socket and remove it from in-memory storage."""
-        with self.redis.lock(user_id):
-            sockets = self.get_sockets(user_id)
+        with self.redis.lock(username):
+            sockets = self.get_sockets(username)
             if ws in sockets:
                 sockets.remove(ws)
 
@@ -71,8 +71,8 @@ class Sockets:
 
     async def process(self, message: Message):
         """Submit a message to all available sockets for a particular user."""
-        user_id = message['user_id']
-        sockets = self.get_sockets(user_id)
+        username = message['username']
+        sockets = self.get_sockets(username)
         if not sockets:
             return
 
@@ -106,9 +106,9 @@ class Sockets:
             if data:
                 await self.process(data)
 
-    def _set_socket(self, user_id: str, ws: web.WebSocketResponse):
-        with self.redis.lock(user_id):
-            open_sockets = self.sockets.setdefault(user_id, [])
+    def _set_socket(self, username: str, ws: web.WebSocketResponse):
+        with self.redis.lock(username):
+            open_sockets = self.sockets.setdefault(username, [])
             open_sockets.append(ws)
 
 

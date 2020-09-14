@@ -8,7 +8,7 @@ from messaging.views import healthcheck
 from messaging.authentication import (
     create_token,
     is_token_valid,
-    get_user_id,
+    get_username,
     get_socket_token,
     get_app_token,
     require_auth,
@@ -17,15 +17,15 @@ from messaging import config
 
 
 def test_creates_token():
-    token = create_token(config.APP_SECRET)
+    token = create_token(config.APP_SECRET, 'test-user')
     assert is_token_valid(token, config.APP_SECRET) is True
     assert is_token_valid(token, 'bad-secret') is False
 
 
-def test_gets_user_id():
-    token = create_token(config.APP_SECRET, 'user-id')
-    user_id = get_user_id(token)
-    assert user_id == 'user-id'
+def test_gets_username():
+    token = create_token(config.APP_SECRET, 'username')
+    username = get_username(token)
+    assert username == 'username'
 
 
 def test_retrieves_token_from_query_params():

@@ -14,7 +14,10 @@ from messaging.authentication import (
     create_token,
     require_auth,
 )
-from messaging.types import message_schema
+from messaging.types import (
+    token_schema,
+    message_schema,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -25,9 +28,19 @@ async def healthcheck(_: web.Request) -> web.Response:
     return web.Response(text='ok')
 
 
-async def app_token(_: web.Request) -> web.Response:
+async def app_token(request: web.Request) -> web.Response:
     """Generate an authorization token."""
-    token = create_token(config.APP_SECRET)
+    try:
+        data = await request.json()
+    except (json.decoder.JSONDecodeError, TypeError) as exc:
+        raise web.HTTPBadRequest from exc
+
+    try:
+        token_schema.validate(data)
+    except SchemaError as exc:
+        raise web.HTTPBadRequest from exc
+
+    token = create_token(config.APP_SECRET, data['username'])
     return web.json_response({
         'token': token,
     })
@@ -66,7 +79,7 @@ async def socket_token(request: web.Request) -> web.Response:
     previously authenticated to generate the token.
 
     """
-    token = create_token(config.SOCKET_SECRET, request['user_id'])
+    token = create_token(config.SOCKET_SECRET, request['username'])
     return web.json_response({
         'token': token,
     })
@@ -80,26 +93,26 @@ async def socket(request: web.Request) -> web.WebSocketResponse:
     with the user ID.
 
     """
-    user_id = request['user_id']
+    username = request['username']
     sockets = request.app['sockets']
 
     ws = web.WebSocketResponse(autoping=True, heartbeat=10)
     await ws.prepare(request)
 
-    await sockets.set_socket(user_id, ws)
+    await sockets.set_socket(username, ws)
 
     try:
         async for msg in ws:
             if msg.type == WSMsgType.TEXT:
                 await ws.send_str(msg.data)
             if msg.type in (WSMsgType.CLOSED, WSMsgType.CLOSE):
-                await sockets.close_socket(user_id, ws)
+                await sockets.close_socket(username, ws)
             if msg.type == WSMsgType.ERROR:
-                await sockets.close_socket(user_id, ws)
+                await sockets.close_socket(username, ws)
                 logger.error(
                     'ws connection closed with exception %s', ws.exception(),
                 )
     finally:
-        await sockets.close_socket(user_id, ws)
+        await sockets.close_socket(username, ws)
 
     return ws

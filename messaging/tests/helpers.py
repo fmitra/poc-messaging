@@ -3,7 +3,9 @@ from aiohttp.client import ClientSession
 
 
 async def app_token(client: ClientSession) -> str:
-    resp = await client.get('/token')
+    resp = await client.post('/token', json={
+        'username': 'test-user',
+    })
     data = await resp.json()
     token = data['token']
     return token
@@ -11,7 +13,7 @@ async def app_token(client: ClientSession) -> str:
 
 async def socket_token(client: ClientSession) -> str:
     token = await app_token(client)
-    resp = await client.get('/ws/token', headers={
+    resp = await client.post('/ws/token', headers={
         'Authorization': token,
     })
     data = await resp.json()

@@ -17,7 +17,7 @@ async def test_processes_published_messages(process_mock):
 
     for i in range(10):
         await active_sockets.publish({
-            'user_id': 'fe63a8f7e6c643a3aca98f639e5604d1',
+            'username': 'test-user',
             'content': 'hello world',
         })
 

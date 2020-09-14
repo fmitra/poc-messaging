@@ -4,10 +4,8 @@ Provides token generation, validation and other
 auth/identity related functions.
 
 """
-from uuid import uuid4
 from datetime import datetime, timedelta
 from functools import wraps
-from typing import Optional
 
 import jwt
 from aiohttp import web
@@ -52,7 +50,7 @@ def is_token_valid(token: str, secret: str) -> bool:
     return True
 
 
-def create_token(secret: str, user_id: Optional[str] = None) -> str:
+def create_token(secret: str, username: str) -> str:
     """Creates a new JWT token with a given secret.
 
     If a user ID is not provided, it will be created automatically.
@@ -67,7 +65,7 @@ def create_token(secret: str, user_id: Optional[str] = None) -> str:
     token = jwt.encode(
         {
             'exp': int(exp.strftime('%s')),
-            'user_id': user_id or uuid4().hex,
+            'username': username,
         },
         secret,
         algorithm=config.JWT_ALG,
@@ -76,8 +74,8 @@ def create_token(secret: str, user_id: Optional[str] = None) -> str:
     return token.decode()
 
 
-def get_user_id(token: str) -> str:
-    """Retrieves a user ID from a JWT token."""
+def get_username(token: str) -> str:
+    """Retrieves a username from a JWT token."""
     try:
         decoded = jwt.decode(
             str.encode(token),
@@ -87,7 +85,7 @@ def get_user_id(token: str) -> str:
     except jwt.exceptions.PyJWTError:  # type: ignore
         decoded = {}
 
-    return decoded.get('user_id', '')
+    return decoded.get('username', '')
 
 
 def get_app_token(request: web.Request) -> str:
