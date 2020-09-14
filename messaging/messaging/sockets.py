@@ -31,11 +31,6 @@ class Sockets:
         self.channel = r.pubsub()
         self.channel.subscribe(channel_name)
 
-    async def set_socket(self, username: str, ws: web.WebSocketResponse):
-        """Store a socket in memory, referenced by username."""
-        loop = asyncio.get_event_loop()
-        await loop.run_in_executor(None, self._set_socket, username, ws)
-
     def get_sockets(self, username: str) -> List[web.WebSocketResponse]:
         """Retrieve all open sockets for a username."""
         return self.sockets.get(username, [])
@@ -52,14 +47,16 @@ class Sockets:
         asyncio.set_event_loop(loop)
         return loop.run_until_complete(self._handle_new_messages())
 
+    async def set_socket(self, username: str, ws: web.WebSocketResponse):
+        """Store a socket in memory, referenced by username."""
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, self._set_socket, username, ws)
+
     async def close_socket(self, username: str, ws: web.WebSocketResponse):
         """Close a socket and remove it from in-memory storage."""
-        with self.redis.lock(username):
-            sockets = self.get_sockets(username)
-            if ws in sockets:
-                sockets.remove(ws)
-
-            await ws.close()
+        await ws.close()
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, self._close_socket, username, ws)
 
     async def shut_down(self):
         """Close all open sockets."""
@@ -110,6 +107,12 @@ class Sockets:
         with self.redis.lock(username):
             open_sockets = self.sockets.setdefault(username, [])
             open_sockets.append(ws)
+
+    def _close_socket(self, username: str, ws: web.WebSocketResponse):
+        with self.redis.lock(username):
+            sockets = self.get_sockets(username)
+            if ws in sockets:
+                sockets.remove(ws)
 
 
 def serialize(msg: Union[str, bytearray, bytes]) -> Optional[Message]:

@@ -1,3 +1,4 @@
+import asyncio
 import jwt
 import redis
 from aiohttp.client_exceptions import WSServerHandshakeError
@@ -25,6 +26,7 @@ async def test_establishes_and_closes_multiple_ws_connections(client):
 
     await ws1.close()
     await ws1.receive()
+    await asyncio.sleep(.1)
     assert len(sockets.get_sockets(username)) == 1
 
 

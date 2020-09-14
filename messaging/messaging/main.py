@@ -42,6 +42,7 @@ def add_dependencies(app: web.Application):
 
 
 def add_cors_headers(app: web.Application):
+    """Add CORS headers."""
     cors = aiohttp_cors.setup(app, defaults={
         config.CORS_ORIGIN: aiohttp_cors.ResourceOptions(
             allow_methods=('POST', 'GET'),

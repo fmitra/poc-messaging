@@ -15,7 +15,7 @@ export default class App extends Component<{}, State> {
 
   onMessage = (message: string): void => {
     const messages = this.state.messages
-    messages.push('message');
+    messages.push(message);
     this.setState({ messages });
   }
 
