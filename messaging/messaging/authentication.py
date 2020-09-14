@@ -101,4 +101,4 @@ def get_app_token(request: web.Request) -> str:
 def get_socket_token(request: web.Request) -> str:
     """Retrieves JWT token from a query parameter."""
     params = request.rel_url.query
-    return params.get('token', '')
+    return params.get('authorization', '')

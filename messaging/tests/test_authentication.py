@@ -39,7 +39,7 @@ def test_retrieves_token_from_query_params():
 def test_retrieves_token_from_headers():
     request = mock.Mock(spec=web.Request)
     request.rel_url.query = {
-        'token': 'Token'
+        'authorization': 'Token'
     }
     assert get_socket_token(request) == 'Token'
 

@@ -8,7 +8,11 @@ from messaging.authentication import (
     is_token_valid,
 )
 
-from tests.helpers import app_token, socket_token
+from tests.helpers import (
+    app_token,
+    socket_token,
+    ws_connect,
+)
 
 
 async def test_establishes_and_closes_multiple_ws_connections(client):
@@ -16,8 +20,8 @@ async def test_establishes_and_closes_multiple_ws_connections(client):
     token = await socket_token(client)
 
     user_id = get_user_id(token)
-    ws1 = await client.ws_connect('/ws?token={}'.format(token))
-    ws2 = await client.ws_connect('/ws?token={}'.format(token))
+    ws1 = await ws_connect(client, token)
+    ws2 = await ws_connect(client, token)
 
     await ws1.close()
     await ws1.receive()
@@ -27,7 +31,7 @@ async def test_establishes_and_closes_multiple_ws_connections(client):
 async def test_sends_message(client):
     token = await socket_token(client)
     user_id = get_user_id(token)
-    ws = await client.ws_connect('/ws?token={}'.format(token))
+    ws = await ws_connect(client, token)
 
     resp = await client.post('/message', json={
         'user_id': user_id,
@@ -42,7 +46,7 @@ async def test_sends_message(client):
 
 async def test_establishes_ws_connection(client):
     token = await socket_token(client)
-    ws = await client.ws_connect('/ws?token={}'.format(token))
+    ws = await ws_connect(client, token)
     await ws.ping()
 
     await ws.send_str('hello world')
@@ -52,7 +56,7 @@ async def test_establishes_ws_connection(client):
 
 async def test_fails_to_establish_ws_connection(client):
     try:
-        await client.ws_connect('/ws?token=invalid-token')
+        ws = await ws_connect(client, 'invalid-token')
     except WSServerHandshakeError as e:
         assert e.status == 403
     else:

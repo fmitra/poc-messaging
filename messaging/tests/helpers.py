@@ -1,3 +1,4 @@
+from aiohttp.web import WebSocketResponse
 from aiohttp.client import ClientSession
 
 
@@ -17,3 +18,6 @@ async def socket_token(client: ClientSession) -> str:
     token = data['token']
     return token
 
+
+async def ws_connect(client: ClientSession, token: str) -> WebSocketResponse:
+    return await client.ws_connect(f'/ws?authorization={token}')
