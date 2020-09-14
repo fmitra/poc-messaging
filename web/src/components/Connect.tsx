@@ -9,14 +9,22 @@ interface State {
   errorMessage: string;
 }
 
-export default class Connect extends Component<{}, State> {
-  constructor(props: {}) {
+interface Props {
+  onMessage: { (message: string): void };
+}
+
+export default class Connect extends Component<Props, State> {
+  constructor(props: Props) {
     super(props);
     this.state = {
       username: '',
       isAuthorized: false,
       errorMessage: '',
     };
+  }
+
+  static defaultProps = {
+    onMessage: (m: string): void => {},
   }
 
   handleConnect = async (e: Event): Promise<void> => {
@@ -32,7 +40,7 @@ export default class Connect extends Component<{}, State> {
     }
 
     this.setState({ isAuthorized: true });
-    connect(token, (m: string): void => { console.log(m); }, null);
+    connect(token, this.props.onMessage, null);
   }
 
   handleUsername = (e: Event): void => {
