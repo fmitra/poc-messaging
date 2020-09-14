@@ -9,6 +9,7 @@ import asyncio
 import threading
 
 from aiohttp import web
+import aiohttp_cors
 import redis
 
 from messaging import config
@@ -40,6 +41,17 @@ def add_dependencies(app: web.Application):
     app['sockets'] = sockets
 
 
+def add_cors_headers(app: web.Application):
+    cors = aiohttp_cors.setup(app, defaults={
+        config.CORS_ORIGIN: aiohttp_cors.ResourceOptions(
+            allow_methods=('POST', 'GET'),
+            allow_headers=('X-Requested-With', 'Content-Type', 'Authorization'),
+        ),
+    })
+    for route in list(app.router.routes()):
+        cors.add(route)
+
+
 async def close_sockets(app: web.Application):
     """Application cleanup on shutdown."""
     sockets = app['sockets']
@@ -69,6 +81,7 @@ def create_application() -> web.Application:
     ))
     add_dependencies(app)
     add_routes(app)
+    add_cors_headers(app)
 
     app.on_cleanup.append(close_sockets)
     app.on_startup.append(monitor_messages)
