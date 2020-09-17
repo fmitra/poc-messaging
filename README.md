@@ -16,7 +16,25 @@ Here we use a JWT token with 1-minute expiry.
 2. Messsaging: Redis Pub/Sub is used to deliver messages. Applications store
 open sockets in memory, grouped by a username and listen to incoming messages.
 An application tracking a specific user then forwards the message down the
-socket on receipt.
+socket on receipt. A pub/sub broker ensures that regardless of where a client
+connects, we can deliver messages.
+
+### Other Concerns
+
+These items are not covered in this POC, but depending on your application's
+needs, you should take into consideration the following:
+
+1. Depending on the use-case, clients may need access to older/undelivered
+messages for proper UX. Messages should be timestamped, stored, and queryable
+if this is required.
+
+2. Delivered messages should be structured and convey meaning. A good
+example is the [Slack API](https://api.slack.com/rtm) which implement's a `type` parameter
+as opposed to enabling multiple websocket APIs to deliver different messages.
+
+3. You will want to budget for a [thundering herd of client reconnections](https://centrifugal.github.io/centrifugo/blog/scaling_websocket/) should
+a service go down. Common solutions for this include exponential backoff
+implemented on the client and rate limiting.
 
 ## Backend
 

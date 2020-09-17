@@ -58,14 +58,6 @@ class Sockets:
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, self._close_socket, username, ws)
 
-    async def shut_down(self):
-        """Close all open sockets."""
-        futures = [
-            socket.close() for user_sockets in self.sockets.values()
-            for socket in user_sockets
-        ]
-        await asyncio.gather(*futures)
-
     async def process(self, message: Message):
         """Submit a message to all available sockets for a particular user."""
         username = message['username']

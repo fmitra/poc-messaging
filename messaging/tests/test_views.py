@@ -23,6 +23,8 @@ async def test_establishes_and_closes_multiple_ws_connections(client):
     username = get_username(token)
     ws1 = await ws_connect(client, token)
     ws2 = await ws_connect(client, token)
+    await asyncio.sleep(.1)
+    assert len(sockets.get_sockets(username)) == 2
 
     await ws1.close()
     await ws1.receive()

@@ -7,6 +7,7 @@ interface State {
   username: string;
   isAuthorized: boolean;
   errorMessage: string;
+  socket: WebSocket | null;
 }
 
 interface Props {
@@ -20,6 +21,7 @@ export default class Connect extends Component<Props, State> {
       username: '',
       isAuthorized: false,
       errorMessage: '',
+      socket: null,
     };
   }
 
@@ -39,8 +41,11 @@ export default class Connect extends Component<Props, State> {
       return;
     }
 
-    this.setState({ isAuthorized: true });
-    connect(token, this.props.onMessage, null);
+    const ws = connect(token, this.props.onMessage, null);
+    this.setState({
+      isAuthorized: true,
+      socket: ws,
+    });
   }
 
   handleUsername = (e: Event): void => {
@@ -48,31 +53,43 @@ export default class Connect extends Component<Props, State> {
     this.setState({ username: value });
   }
 
+  handleDisconnect = (e: Event): void => {
+    e.preventDefault();
+    if (this.state.socket) {
+      this.state.socket.close();
+    }
+  }
+
   render(): JSX.Element {
     const NotAuthorized = (
-      <form class='authorize'>
+      <form class='connect__connect'>
         <input
           type='text'
-          class='authorize__input'
           value={this.state.username}
           onChange={this.handleUsername}
         />
-        <button class='authorize__btn' onClick={this.handleConnect}>
+        <button onClick={this.handleConnect}>
           Authorize
         </button>
         {
           this.state.errorMessage &&
-          <div class='authorize__error'>
+          <div class='connect__error'>
             Please try again: {this.state.errorMessage}
           </div>
         }
       </form>
     );
 
+    const Disconnect = (
+      <button class='connect__disconnect' onClick={this.handleDisconnect}>
+        Disconnect
+      </button>
+    );
+
     if (!this.state.isAuthorized) {
       return NotAuthorized;
     } else {
-      return <div>Connected...</div>
+      return Disconnect;
     }
   }
 };

@@ -7,12 +7,14 @@ type onMessage = { (msg: string): void };
 /**
  * Initiates a websocket connection
  */
-const connect = (token: string, m: onMessage, o: onOpen): void => {
+const connect = (token: string, m: onMessage, o: onOpen): WebSocket => {
   const url = `${config.api.baseSocketURL}/ws?authorization=${token}`;
   const ws = new WebSocket(url);
 
   ws.onopen = (e): void => { o && o(); };
   ws.onmessage = (e): void => { m(e.data); };
+
+  return ws;
 };
 
 export default connect;

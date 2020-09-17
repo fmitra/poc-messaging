@@ -105,10 +105,7 @@ async def socket(request: web.Request) -> web.WebSocketResponse:
         async for msg in ws:
             if msg.type == WSMsgType.TEXT:
                 await ws.send_str(msg.data)
-            if msg.type in (WSMsgType.CLOSED, WSMsgType.CLOSE):
-                await sockets.close_socket(username, ws)
             if msg.type == WSMsgType.ERROR:
-                await sockets.close_socket(username, ws)
                 logger.error(
                     'ws connection closed with exception %s', ws.exception(),
                 )

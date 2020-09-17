@@ -53,12 +53,6 @@ def add_cors_headers(app: web.Application):
         cors.add(route)
 
 
-async def close_sockets(app: web.Application):
-    """Application cleanup on shutdown."""
-    sockets = app['sockets']
-    await sockets.shut_down()
-
-
 async def monitor_messages(app: web.Application):
     """Background task to monitor for incoming messages.
 
@@ -84,7 +78,6 @@ def create_application() -> web.Application:
     add_routes(app)
     add_cors_headers(app)
 
-    app.on_cleanup.append(close_sockets)
     app.on_startup.append(monitor_messages)
 
     return app

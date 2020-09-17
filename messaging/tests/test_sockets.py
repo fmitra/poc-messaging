@@ -15,10 +15,11 @@ async def test_processes_published_messages(process_mock):
     t = threading.Thread(target=active_sockets.monitor, args=(loop,), daemon=True)
     t.start()
 
-    for i in range(10):
-        await active_sockets.publish({
+    futures = [
+        active_sockets.publish({
             'username': 'test-user',
             'content': 'hello world',
-        })
-
+        }) for _ in range(10)
+    ]
+    await asyncio.gather(*futures)
     assert process_mock.call_count == 10
