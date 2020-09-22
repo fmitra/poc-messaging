@@ -67,6 +67,12 @@ async def monitor_messages(app: web.Application):
     thread.start()
 
 
+async def cleanup(app: web.Application):
+    """Application cleanup on shutdown."""
+    sockets = app['sockets']
+    await sockets.shut_down()
+
+
 def create_application() -> web.Application:
     """Start up the application."""
     configure()
@@ -79,6 +85,7 @@ def create_application() -> web.Application:
     add_cors_headers(app)
 
     app.on_startup.append(monitor_messages)
+    app.on_cleanup.append(cleanup)
 
     return app
 

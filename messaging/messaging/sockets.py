@@ -68,6 +68,10 @@ class Sockets:
         outgoing = [s.send_str(message['content']) for s in sockets]
         await asyncio.gather(*outgoing)
 
+    async def shut_down(self):
+        """Close redis connection."""
+        self.redis.close()
+
     async def publish(self, msg: Message):
         """Publish a message to a Redis channel.
 
